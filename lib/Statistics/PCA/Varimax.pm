@@ -15,7 +15,7 @@ Statistics::PCA::Varimax - A Perl implementation of Varimax rotation.
 
 =head1 VERSION
 
-This document describes Statistics::PCA::Varimax version 0.0.1
+This document describes Statistics::PCA::Varimax version 0.0.2
 
 
 =cut
@@ -24,23 +24,25 @@ This document describes Statistics::PCA::Varimax version 0.0.1
 
     use Statistics::PCA::Varimax;
     
-    $var = [
-                ['0.28681878905323','0.698073348095294','0.74438876316011','0.470524192285809','0.680791954474169',
-                    '0.498170118662969','0.860498034802244','0.641789626034371','0.297845584599187'],
-                ['0.0756033482963575','0.153354936565771','-0.409594770024921','0.522312777440116','-0.155863960857642',
-                    '-0.498322625588048','-0.115020142763412','0.321608985389286','0.595372801517037'],
-                ['-0.840848488772311','-0.0837120896107372','0.0204772130313138','-0.135075805872286','0.148325089906843',
-                    '0.25345619152705','-0.0115934949036374','-0.0439674954145424','0.533407216837215']
-           ];
+    # Each nested array ref corresponds to the loadings for a single factor.
+    my $loadings = [
+                        [qw/  0.28681878905  0.69807334810  0.74438876316  0.47052419229  0.68079195447  0.49817011866  0.86049803480  0.64178962603 0.29784558460 /],
+                        [qw/  0.07560334830  0.15335493657 -0.40959477002  0.52231277744 -0.15586396086 -0.49832262559 -0.11502014276  0.32160898539 0.59537280152 /],
+                        [qw/ -0.84084848877 -0.08371208961  0.02047721303 -0.13507580587  0.14832508991  0.25345619152 -0.01159349490 -0.04396749541 0.53340721684 /],
+                   ];
 
-    my ($rotated_loadings_ref, $orthogonal_matrix_ref) = &rotate($var);
+    # Calculate the rotated loadings and orthogonal matrix.
+    my ($rotated_loadings_ref, $orthogonal_matrix_ref) = &rotate($loadings);
 
-    for my $r (0..$#{$rotated_loadings_ref,}) { for my $c (0..$#{$rotated_loadings_ref->[$r]}) { 
-        print qq{$rotated_loadings_ref->[$r][$c], } }; print qq{\n}; 
+    print qq{\nRotated Loadings:\n};
+    for my $c (0..$#{$rotated_loadings_ref->[0]}) { for my $r (0..$#{$rotated_loadings_ref}) { 
+        #print qq{$rotated_loadings_ref->[$r][$c], and r: $r and c: $c\t} }; print qq{\n}; 
+        print qq{$rotated_loadings_ref->[$r][$c]\t} }; print qq{\n}; 
         }
 
+    print qq{\nOrthogonal Matrix:\n};
     for my $r (0..$#{$orthogonal_matrix_ref}) { for my $c (0..$#{$orthogonal_matrix_ref->[$r]}) { 
-        print qq{$orthogonal_matrix_ref->[$r][$c], } }; print qq{\n}; 
+        print qq{$orthogonal_matrix_ref->[$r][$c]\t} }; print qq{\n}; 
         }
 
 =cut
@@ -50,8 +52,8 @@ This document describes Statistics::PCA::Varimax version 0.0.1
 Varimax rotation is a change of coordinates used in principal component analysis and factor analysis that maximizes the
 sum of the variances of the squared loadings matrix. This module exports a single routine 'rotate'. This routine is
 called in LIST context and accepts a LIST-of-LISTS (LoL) corresponding to the loadings matrix of a factor analysis and
-returns two references to LoLs. The first is a LoL of the rotated loadings and the seconds is a LoL of the orthogonal
-matrix. See http://en.wikipedia.org/wiki/Varimax_rotation.
+returns two references to LoLs (NOTE: each nested LIST corresponds to the loadings for a single factor). The first is a 
+LoL of the rotated loadings and the seconds is a LoL of the orthogonal matrix. See http://en.wikipedia.org/wiki/Varimax_rotation.
 
 =cut
 
@@ -69,7 +71,7 @@ Daniel S. T. Hughes  C<< <dsth@cpan.net> >>
 
 =cut
 
-use version; our $VERSION = qv('0.0.1');
+use version; our $VERSION = qv('0.0.2');
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -132,7 +134,9 @@ sub rotate {
     #$z_last_mat = ~$z_last_mat;
     my $z_last_mat = Math::MatrixReal->new_from_rows ( $z_last );
 
-    return $z_last_mat->[0], $TT->[0];
+    my $rotated_loadings = _transpose($z_last_mat->[0]);
+
+    return $rotated_loadings, $TT->[0];
     # return $z_last_mat, $TT;
 }
 
